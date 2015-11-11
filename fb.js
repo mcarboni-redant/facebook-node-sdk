@@ -302,7 +302,7 @@
             if(options('timeout')) {
                 requestOptions.timeout = options('timeout');
             }
-            if (params.source) {
+            if (params.source || params.file || params.image) {
                 requestOptions.formData = params;
             } else {
                 //Serialize
