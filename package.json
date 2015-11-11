@@ -17,7 +17,7 @@
     "node": ">=0.6.9"
   },
   "dependencies": {
-    "request": "2.9.x",
+    "request": "2.65.x",
     "crypto": "0.0.3"
   },
   "devDependencies": {
