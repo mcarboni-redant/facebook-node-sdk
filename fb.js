@@ -179,7 +179,7 @@
                     return;
                 }
                 next = args.shift();
-            };
+            }
 
             method = method || 'get';
             params = params || {};
@@ -225,7 +225,7 @@
          */
         oauthRequest = function(domain, path, method, params, cb) {
             var   uri
-                , body
+                , body = ''
                 , key
                 , value
                 , requestOptions
@@ -249,46 +249,32 @@
                 uri = 'https://graph.facebook.com/' + path;
                 isOAuthRequest = /^oauth.*/.test('oauth/');
             }
-            else if(domain == 'api') {
+            else if(domain === 'api') {
                 uri = 'https://api.facebook.com/' + path;
             }
-            else if(domain == 'api_read') {
+            else if(domain === 'api_read') {
                 uri = 'https://api-read.facebook.com/' + path;
             }
 
             if(method === 'post') {
-                body = '';
+
                 if(params.access_token) {
-                    if((uri.indexOf("?") !== -1)) {
+                    if((uri.indexOf('?') !== -1)) {
                         uri += '&';
                     }
                     else {
                         uri += '?';
                     }
                     uri += 'access_token=' + encodeURIComponent(params.access_token);
-                    delete params['access_token'];
-                    
+                    delete params.access_token;
+
                     if(params.appsecret_proof) {
                         uri += '&appsecret_proof=' + encodeURIComponent(params.appsecret_proof);
-                        delete params['appsecret_proof'];
+                        delete params.appsecret_proof;
                     }
-                }
-
-                for(key in params) {
-                    value = params[key];
-                    if(typeof value !== 'string') {
-                        value = JSON.stringify(value);
-                    }
-                    if(value !== undefined) {
-                        body += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
-                    }
-                }
-
-                if(body.length > 0) {
-                    body = body.substring(0, body.length - 1);
                 }
             } else {
-                if((uri.indexOf("?") !== -1)) {
+                if((uri.indexOf('?') !== -1)) {
                     uri += '&';
                 }
                 else {
@@ -302,23 +288,39 @@
                     uri += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
                 }
                 uri = uri.substring(0, uri.length -1);
-            };
-            
+            }
+
             pool = { maxSockets : options('maxSockets') || Number(process.env.MAX_SOCKETS) || 5 };
             requestOptions = {
                   method: method
-                , uri: uri
-                , body: body
+                , url: uri
                 , pool: pool
             };
             if(options('proxy')) {
-                requestOptions['proxy'] = options('proxy');
+                requestOptions.proxy = options('proxy');
             }
             if(options('timeout')) {
-                requestOptions['timeout'] = options('timeout');
+                requestOptions.timeout = options('timeout');
             }
-            request(requestOptions
-            , function(error, response, body) {
+            if (params.source) {
+                requestOptions.formData = params;
+            } else {
+                //Serialize
+                for(key in params) {
+                   value = params[key];
+                   if(typeof value !== 'string') {
+                       value = JSON.stringify(value);
+                   }
+                   if(value !== undefined) {
+                       body += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
+                   }
+               }
+               if(body.length > 0) {
+                    body = body.substring(0, body.length - 1);
+                }
+                requestOptions.body = body;
+            }
+            request(requestOptions, function (error, response, body) {
                 if(error !== null) {
                     if(error === Object(error) && has(error, 'error')) {
                         return cb(error);
@@ -345,6 +347,7 @@
                     cb(json);
                 }
             });
+
         };
 
         parseOAuthApiResponse = function (body) {
@@ -386,7 +389,7 @@
         setAccessToken = function (accessToken) {
             options({'accessToken': accessToken});
         };
-        
+
         getAppSecretProof = function (accessToken, appSecret) {
             var hmac = crypto.createHmac('sha256', appSecret);
             hmac.update(accessToken);
@@ -488,7 +491,7 @@
                             // ping Facebook for instrumentation requirement
                             pingFacebook(opts[key]);
                             break;
-                        
+
                         case 'appSecret':
                         case 'accessToken':
                             opts.appSecretProof =
@@ -651,7 +654,7 @@
                 if(options('proxy')) {
                     requestOptions['proxy'] = options('proxy');
                 }
-			
+
                 request(
                     requestOptions
                     , function(error, response, body) {
