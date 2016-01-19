@@ -246,8 +246,8 @@
             }
 
             if(domain === 'graph') {
-                uri = 'https://graph.facebook.com/' + path;
-                isOAuthRequest = /^oauth.*/.test('oauth/');
+                isOAuthRequest = /^oauth|debug.*/.test(path);
+                uri = 'https://graph.facebook.com/' + (isOAuthRequest?'':'v2.5/') + path;
             }
             else if(domain === 'api') {
                 uri = 'https://api.facebook.com/' + path;
@@ -293,7 +293,8 @@
             pool = { maxSockets : options('maxSockets') || Number(process.env.MAX_SOCKETS) || 5 };
             requestOptions = {
                   method: method
-                , url: uri
+                , uri: uri
+                , body: body
                 , pool: pool
             };
             if(options('proxy')) {
@@ -578,6 +579,28 @@
         /**
          *
          * @access public
+         * @param path {String} the url path
+         * @param method {String} the http method (default: `"GET"`)
+         * @param params {Object} the parameters for the query
+         * @return promise {Promise} a promise to handle the error and response
+         */
+        promise = function() {
+            var args = Array.prototype.slice.call(arguments);
+            return new Promise(function(resolve, reject) {
+                args.push(function (res) {
+                    if(!res || res.error) {
+                        reject(res);
+                    } else {
+                        resolve(res);
+                    }
+                });
+                api.apply(this, args);
+            });
+        };
+
+        /**
+         *
+         * @access public
          * @param opt {Object} the parameters for appId and scope
          */
         getLoginUrl = function (opt) {
@@ -668,6 +691,7 @@
         return {
               api: api
             , napi: napi // this method does not exist in fb js sdk
+            , promise: promise
             , getAccessToken: getAccessToken
             , setAccessToken: setAccessToken // this method does not exist in fb js sdk
             , parseSignedRequest : parseSignedRequest // this method does not exist in fb js sdk
