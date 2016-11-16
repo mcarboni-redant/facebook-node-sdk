@@ -32,6 +32,7 @@
                 , 'scope':  null
                 , 'redirectUri': null
                 , 'proxy': null
+                , 'graphVersion': '2.5'
             }
             , readOnlyCalls = {
                   'admin.getallocation': true
@@ -247,7 +248,7 @@
 
             if(domain === 'graph') {
                 isOAuthRequest = /^oauth|debug.*/.test(path);
-                uri = 'https://graph.facebook.com/' + (isOAuthRequest?'':'v2.5/') + path;
+                uri = 'https://graph.facebook.com/' + (isOAuthRequest?'':'v'+opts.graphVersion+'/') + path;
             }
             else if(domain === 'api') {
                 uri = 'https://api.facebook.com/' + path;
@@ -342,6 +343,7 @@
                       // let's not let them blow up our application.
                       json =  { error: {
                           code: 'JSONPARSE',
+                          body: body,
                           Error: ex
                       }};
                     }
